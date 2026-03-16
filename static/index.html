@@ -584,7 +584,8 @@
 //  GAME CLIENT
 // ═══════════════════════════════════════════════════════════════════
 const WS_HOST = location.hostname;
-const WS_PORT = 8000;
+const WS_PORT = location.port || (location.protocol === 'https:' ? 443 : 80);
+const API_BASE = `${location.protocol}//${location.host}`;
 
 let ws         = null;
 let myId       = null;
@@ -926,7 +927,7 @@ function connect(name, lId) {
   playerName = name;
   lobbyId    = lId;
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(`${proto}://${WS_HOST}:${WS_PORT}/ws/${encodeURIComponent(lId)}/${encodeURIComponent(name)}`);
+  ws = new WebSocket(`${proto}://${location.host}/ws/${encodeURIComponent(lId)}/${encodeURIComponent(name)}`);
 
   ws.onopen = () => {
     startInputLoop();
@@ -1045,7 +1046,7 @@ async function doLogin() {
   const err  = document.getElementById('login-err');
   if (!user || !pass) { err.textContent = 'Fill in both fields!'; return; }
   try {
-    const res  = await fetch(`http://${WS_HOST}:${WS_PORT}/login`, {
+    const res  = await fetch(`${API_BASE}/login`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ username: user, password: pass })
     });
@@ -1068,7 +1069,7 @@ async function doRegister() {
   if (!user || !pass) { err.textContent = 'Fill in all fields!'; return; }
   if (pass !== pass2) { err.textContent = 'Passwords don\'t match!'; return; }
   try {
-    const res  = await fetch(`http://${WS_HOST}:${WS_PORT}/register`, {
+    const res  = await fetch(`${API_BASE}/register`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ username: user, password: pass })
     });
@@ -1130,7 +1131,7 @@ function leaveGame() {
 // ─── Lobby browser ───────────────────────────────────────────────
 async function refreshLobbies() {
   try {
-    const res  = await fetch(`http://${WS_HOST}:${WS_PORT}/lobbies`);
+    const res  = await fetch(`${API_BASE}/lobbies`);
     const data = await res.json();
     const el   = document.getElementById('lobby-list');
     if (!data.length) {
@@ -1162,7 +1163,7 @@ function quickJoin(lid) {
 // ─── Leaderboard ─────────────────────────────────────────────────
 async function openLeaderboard() {
   try {
-    const res  = await fetch(`http://${WS_HOST}:${WS_PORT}/leaderboard`);
+    const res  = await fetch(`${API_BASE}/leaderboard`);
     const data = await res.json();
     const el   = document.getElementById('lb-entries');
     if (!data.length) {
