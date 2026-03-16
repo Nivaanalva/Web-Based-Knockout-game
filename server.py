@@ -37,7 +37,7 @@ GROUND_Y          = 0.0
 PLAYER_SPEED      = 6.0
 JUMP_VEL          = 9.0
 LOBBY_MAX         = 9
-LOBBY_START_MIN   = 2         # min players to start countdown
+LOBBY_START_MIN   = 1         # min players to start countdown
 COUNTDOWN_SECS    = 5
 AI_TICK           = 0.25      # AI decision interval
 
