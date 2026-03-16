@@ -52,6 +52,28 @@ lobbies:    Dict[str, "Lobby"]    = {}
 leaderboard: Dict[str, int]       = {}   # username -> total wins
 accounts:   Dict[str, dict]       = {}   # username -> {password, wins, games}
 
+ACCOUNTS_FILE = "accounts.json"
+
+def load_accounts():
+    global accounts, leaderboard
+    try:
+        with open(ACCOUNTS_FILE, "r") as f:
+            accounts = json.load(f)
+            leaderboard = {u: d.get("wins", 0) for u, d in accounts.items()}
+            print(f"Loaded {len(accounts)} accounts from file")
+    except FileNotFoundError:
+        accounts = {}
+        print("No accounts file found, starting fresh")
+
+def save_accounts():
+    try:
+        with open(ACCOUNTS_FILE, "w") as f:
+            json.dump(accounts, f)
+    except Exception as e:
+        print(f"Error saving accounts: {e}")
+
+load_accounts()
+
 # ─── Data Classes ─────────────────────────────────────────────────────────────
 class Player:
     def __init__(self, pid: str, name: str, color: str, is_ai: bool = False):
@@ -224,6 +246,7 @@ class Lobby:
                     if winner_name in accounts:
                         accounts[winner_name]["wins"] += 1
                         accounts[winner_name]["games"] += 1
+                        save_accounts()
                     await self.send_chat("", f"🏆 {winner_name} wins!", system=True)
                 else:
                     self.winner = None
@@ -366,6 +389,7 @@ async def register(data: dict = Body(...)):
         return {"ok": False, "msg": "Username already taken!"}
     accounts[username] = {"password": password, "wins": 0, "games": 0}
     leaderboard[username] = 0
+    save_accounts()
     return {"ok": True, "msg": "Account created!", "username": username}
 
 @app.post("/login")
