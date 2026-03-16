@@ -3,1333 +3,627 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>KNOCKOUT!</title>
+<title>KNOCKOUT! 🐧</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet"/>
 <style>
-  :root {
-    --bg: #1a1a2e;
-    --panel: rgba(255,255,255,0.07);
-    --accent: #ff6b6b;
-    --accent2: #ffd93d;
-    --accent3: #6bcb77;
-    --text: #f0f0f0;
-    --border: rgba(255,255,255,0.15);
-    --radius: 16px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Nunito', sans-serif;
-    overflow: hidden;
-    height: 100vh;
-    width: 100vw;
-  }
+:root{--bg:#1a1a2e;--panel:rgba(255,255,255,0.07);--accent:#ff6b6b;--accent2:#ffd93d;--accent3:#6bcb77;--text:#f0f0f0;--border:rgba(255,255,255,0.15);--radius:16px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;overflow:hidden;height:100vh;width:100vw;}
+.screen{display:none;position:absolute;inset:0;}
+.screen.active{display:flex;}
+#auth-screen,#menu-screen{flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#0d2b6e 0%,#1a1a2e 70%);gap:14px;overflow-y:auto;padding:20px 0;}
+.logo{font-family:'Fredoka One',cursive;font-size:clamp(2.5rem,9vw,5rem);background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 30px rgba(255,107,107,.5));animation:pulse 2s ease-in-out infinite alternate;letter-spacing:4px;}
+@keyframes pulse{from{filter:drop-shadow(0 0 20px rgba(255,107,107,.3))}to{filter:drop-shadow(0 0 50px rgba(100,200,255,.8))}}
+.tagline{font-size:.82rem;color:rgba(255,255,255,.4);letter-spacing:3px;text-transform:uppercase;margin-top:-8px;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px 26px;backdrop-filter:blur(20px);width:min(460px,92vw);display:flex;flex-direction:column;gap:10px;}
+.card h2{font-family:'Fredoka One',cursive;font-size:1.15rem;color:var(--accent2);}
+input[type=text],input[type=password]{background:rgba(255,255,255,.08);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;color:#fff;font-family:'Nunito',sans-serif;font-size:.92rem;outline:none;transition:border-color .2s;}
+input:focus{border-color:var(--accent);}
+input::placeholder{color:rgba(255,255,255,.3);}
+.btn{font-family:'Fredoka One',cursive;font-size:.95rem;letter-spacing:1px;padding:11px 18px;border:none;border-radius:12px;cursor:pointer;transition:transform .12s;text-transform:uppercase;}
+.btn:hover{transform:translateY(-2px);}
+.btn:active{transform:translateY(0);}
+.btn-primary{background:linear-gradient(135deg,#ff6b6b,#ff4757);color:#fff;box-shadow:0 4px 14px rgba(255,71,87,.4);}
+.btn-secondary{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid var(--border);}
+.btn-secondary:hover{background:rgba(255,255,255,.18);}
+.btn-green{background:linear-gradient(135deg,#6bcb77,#44b852);color:#fff;}
+.row{display:flex;gap:8px;}.row .btn{flex:1;}
+.divider{height:1px;background:var(--border);}
+#lobby-list{display:flex;flex-direction:column;gap:5px;max-height:170px;overflow-y:auto;}
+.lobby-item{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s;}
+.lobby-item:hover{background:rgba(255,255,255,.12);}
+.lobby-item .lb-name{font-weight:700;font-size:.88rem;}
+.lobby-item .lb-info{font-size:.72rem;color:rgba(255,255,255,.5);}
+.lb-badge{font-size:.62rem;padding:2px 7px;border-radius:20px;font-weight:800;text-transform:uppercase;}
+.lb-badge.waiting{background:#ffd93d22;color:#ffd93d;border:1px solid #ffd93d66;}
+.lb-badge.playing{background:#ff6b6b22;color:#ff6b6b;border:1px solid #ff6b6b66;}
+.lb-badge.ended{background:#6bcb7722;color:#6bcb77;border:1px solid #6bcb7766;}
+#menu-footer{display:flex;gap:18px;}
+.link-btn{background:transparent;border:none;color:rgba(255,255,255,.4);font-family:'Nunito',sans-serif;cursor:pointer;font-size:.8rem;text-decoration:underline;}
+.link-btn:hover{color:#fff;}
 
-  /* ── SCREENS ── */
-  .screen { display:none; position:absolute; inset:0; }
-  .screen.active { display:flex; }
+/* SKIN PICKER */
+#skin-section h3{font-family:'Fredoka One',cursive;font-size:.95rem;color:var(--accent3);}
+#skin-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:4px;}
+.skin-btn{width:100%;aspect-ratio:1;border-radius:10px;border:2.5px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s;font-size:1.3rem;display:flex;align-items:center;justify-content:center;}
+.skin-btn:hover{transform:scale(1.12);}
+.skin-btn.selected{border-color:#ffd93d;box-shadow:0 0 10px rgba(255,217,61,.5);}
 
-  /* ── MENU SCREEN ── */
-  #auth-screen {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(ellipse at 60% 30%, #2d1b69 0%, #1a1a2e 70%);
-    gap: 20px;
-  }
-  #form-login, #form-register {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  #menu-screen {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(ellipse at 60% 30%, #2d1b69 0%, #1a1a2e 70%);
-    gap: 20px;
-  }
-  .logo {
-    font-family: 'Fredoka One', cursive;
-    font-size: clamp(3rem, 10vw, 7rem);
-    background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: none;
-    filter: drop-shadow(0 0 40px rgba(255,107,107,0.4));
-    animation: pulse 2s ease-in-out infinite alternate;
-    letter-spacing: 4px;
-  }
-  @keyframes pulse {
-    from { filter: drop-shadow(0 0 20px rgba(255,107,107,0.3)); }
-    to   { filter: drop-shadow(0 0 60px rgba(255,107,107,0.7)); }
-  }
-  .tagline {
-    font-size: 1.1rem;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin-top: -12px;
-    margin-bottom: 8px;
-  }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px 36px;
-    backdrop-filter: blur(20px);
-    width: min(420px, 90vw);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .card h2 {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.4rem;
-    color: var(--accent2);
-    margin-bottom: 4px;
-  }
-  input[type=text] {
-    background: rgba(255,255,255,0.08);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    color: #fff;
-    font-family: 'Nunito', sans-serif;
-    font-size: 1rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  input[type=text]:focus { border-color: var(--accent); }
-  input[type=text]::placeholder { color: rgba(255,255,255,0.3); }
-  .btn {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.1rem;
-    letter-spacing: 1px;
-    padding: 13px 24px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: transform 0.12s, box-shadow 0.12s;
-    text-transform: uppercase;
-  }
-  .btn:hover  { transform: translateY(-2px); }
-  .btn:active { transform: translateY(0); }
-  .btn-primary {
-    background: linear-gradient(135deg, #ff6b6b, #ff4757);
-    color: #fff;
-    box-shadow: 0 4px 20px rgba(255,71,87,0.4);
-  }
-  .btn-secondary {
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    border: 1.5px solid var(--border);
-  }
-  .btn-secondary:hover { background: rgba(255,255,255,0.18); }
-  .btn-green {
-    background: linear-gradient(135deg, #6bcb77, #44b852);
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(107,203,119,0.35);
-  }
-  .row { display:flex; gap:10px; }
-  .row .btn { flex:1; }
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 4px 0;
-  }
-  #lobby-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-  }
-  .lobby-item {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .lobby-item:hover { background: rgba(255,255,255,0.12); }
-  .lobby-item .lb-name { font-weight: 700; font-size: 0.95rem; }
-  .lobby-item .lb-info { font-size: 0.8rem; color: rgba(255,255,255,0.5); }
-  .lb-badge {
-    font-size: 0.7rem;
-    padding: 3px 8px;
-    border-radius: 20px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  .lb-badge.waiting  { background: #ffd93d22; color: #ffd93d; border: 1px solid #ffd93d66; }
-  .lb-badge.playing  { background: #ff6b6b22; color: #ff6b6b; border: 1px solid #ff6b6b66; }
-  .lb-badge.ended    { background: #6bcb7722; color: #6bcb77; border: 1px solid #6bcb7766; }
-  #leaderboard-btn-menu {
-    background: transparent;
-    border: none;
-    color: rgba(255,255,255,0.4);
-    font-family: 'Nunito', sans-serif;
-    cursor: pointer;
-    font-size: 0.85rem;
-    text-decoration: underline;
-    align-self: center;
-  }
-  #leaderboard-btn-menu:hover { color: #fff; }
+/* GAME */
+#game-screen{position:relative;width:100%;height:100%;}
+#canvas{display:block;width:100%;height:100%;}
+#hud{position:absolute;top:0;left:0;right:0;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-start;padding:11px 13px;gap:8px;}
+.hud-panel{background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:12px;backdrop-filter:blur(10px);padding:6px 11px;font-size:.78rem;}
+#player-list-hud{display:flex;flex-direction:column;gap:3px;min-width:120px;}
+.hud-player{display:flex;align-items:center;gap:6px;font-size:.75rem;}
+.hud-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.hud-player.dead{opacity:.3;text-decoration:line-through;}
+#hud-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
+#status-hud{font-family:'Fredoka One',cursive;font-size:1.3rem;letter-spacing:2px;}
+#countdown-hud{font-family:'Fredoka One',cursive;font-size:5rem;color:#ffd93d;text-shadow:0 0 40px rgba(255,217,61,.6);}
+#winner-banner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.8);border:2px solid var(--accent2);border-radius:24px;padding:26px 44px;text-align:center;backdrop-filter:blur(20px);animation:popIn .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
+@keyframes popIn{from{transform:translate(-50%,-50%) scale(.5);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+#winner-banner h2{font-family:'Fredoka One',cursive;font-size:2rem;color:#ffd93d;}
+#winner-banner p{font-size:.95rem;color:rgba(255,255,255,.7);margin-top:4px;}
 
-  /* ── GAME SCREEN ── */
-  #game-screen {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
-  #canvas { display:block; width:100%; height:100%; }
+/* POWER METER */
+#power-wrap{position:absolute;bottom:55px;left:50%;transform:translateX(-50%);display:none;flex-direction:column;align-items:center;gap:4px;pointer-events:none;}
+#power-title{font-family:'Fredoka One',cursive;font-size:.85rem;letter-spacing:2px;color:#fff;}
+#power-track{width:230px;height:22px;background:rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.25);border-radius:20px;overflow:hidden;}
+#power-fill{height:100%;width:0%;border-radius:20px;transition:width .04s linear;background:linear-gradient(90deg,#6bcb77,#ffd93d,#ff6b6b);}
+#power-num{font-family:'Fredoka One',cursive;font-size:1.9rem;color:#ffd93d;text-shadow:0 0 18px rgba(255,217,61,.8);}
 
-  /* HUD */
-  #hud {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    pointer-events: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 14px 16px;
-    gap: 12px;
-  }
-  #hud-left, #hud-right { display:flex; flex-direction:column; gap:6px; }
-  .hud-panel {
-    background: rgba(0,0,0,0.45);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 12px;
-    backdrop-filter: blur(10px);
-    padding: 8px 14px;
-    font-size: 0.85rem;
-  }
-  #player-list-hud { display:flex; flex-direction:column; gap:4px; min-width: 140px; }
-  .hud-player {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.82rem;
-  }
-  .hud-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-  .hud-player.dead { opacity:0.35; text-decoration: line-through; }
-  #status-hud {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.5rem;
-    text-align: center;
-    letter-spacing: 2px;
-    pointer-events: none;
-  }
-  #countdown-hud {
-    font-family: 'Fredoka One', cursive;
-    font-size: 5rem;
-    text-align: center;
-    color: #ffd93d;
-    text-shadow: 0 0 40px rgba(255,217,61,0.6);
-    animation: countPop 0.3s ease-out;
-    pointer-events: none;
-  }
-  @keyframes countPop {
-    from { transform: scale(1.5); opacity:0.5; }
-    to   { transform: scale(1);   opacity:1; }
-  }
-  #hud-center {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    pointer-events: none;
-  }
-  #winner-banner {
-    display: none;
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    background: rgba(0,0,0,0.75);
-    border: 2px solid var(--accent2);
-    border-radius: 24px;
-    padding: 30px 50px;
-    text-align: center;
-    backdrop-filter: blur(20px);
-    animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
-    pointer-events: none;
-  }
-  @keyframes popIn {
-    from { transform:translate(-50%,-50%) scale(0.5); opacity:0; }
-    to   { transform:translate(-50%,-50%) scale(1);   opacity:1; }
-  }
-  #winner-banner h2 {
-    font-family: 'Fredoka One', cursive;
-    font-size: 2.4rem;
-    color: #ffd93d;
-  }
-  #winner-banner p { font-size:1.1rem; color:rgba(255,255,255,0.7); margin-top:6px; }
-
-  /* Controls hint */
-  #controls-hint {
-    position: absolute;
-    bottom: 14px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.5);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 30px;
-    padding: 6px 20px;
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: 1px;
-    pointer-events: none;
-  }
-
-  /* Chat */
-  #chat-container {
-    position: absolute;
-    bottom: 50px; right: 14px;
-    width: 280px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  #chat-log {
-    background: rgba(0,0,0,0.45);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 12px;
-    padding: 8px 10px;
-    max-height: 140px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    backdrop-filter: blur(8px);
-  }
-  .chat-msg { font-size: 0.78rem; line-height: 1.4; }
-  .chat-msg .sender { font-weight: 800; }
-  .chat-msg.system { color: #ffd93d; font-style: italic; }
-  #chat-input-row {
-    display: flex;
-    gap: 6px;
-  }
-  #chat-input {
-    flex: 1;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 20px;
-    padding: 6px 14px;
-    color: #fff;
-    font-family: 'Nunito', sans-serif;
-    font-size: 0.8rem;
-    outline: none;
-  }
-  #chat-send {
-    background: var(--accent);
-    border: none;
-    border-radius: 20px;
-    color: #fff;
-    padding: 6px 14px;
-    font-family: 'Fredoka One', cursive;
-    cursor: pointer;
-    font-size: 0.8rem;
-  }
-  #btn-leave {
-    position: absolute;
-    top: 14px; right: 14px;
-    z-index: 10;
-  }
-
-  /* PUNCH flash */
-  .punch-flash {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: rgba(255,100,100,0.25);
-    animation: flashOut 0.25s ease-out forwards;
-  }
-  @keyframes flashOut { to { opacity:0; } }
-
-  /* Leaderboard modal */
-  #lb-modal {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    backdrop-filter: blur(6px);
-  }
-  #lb-modal.open { display:flex; }
-  #lb-modal-inner {
-    background: #1e1e3a;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 30px;
-    width: min(400px, 90vw);
-    max-height: 80vh;
-    overflow-y: auto;
-  }
-  #lb-modal-inner h2 {
-    font-family: 'Fredoka One', cursive;
-    color: var(--accent2);
-    font-size: 1.8rem;
-    margin-bottom: 16px;
-    text-align: center;
-  }
-  .lb-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 10px;
-    margin-bottom: 6px;
-  }
-  .lb-rank { font-family:'Fredoka One',cursive; font-size:1.2rem; width:28px; color:rgba(255,255,255,0.4); }
-  .lb-rank.gold   { color:#ffd700; }
-  .lb-rank.silver { color:#c0c0c0; }
-  .lb-rank.bronze { color:#cd7f32; }
-  .lb-uname { flex:1; font-weight:700; }
-  .lb-wins  { font-family:'Fredoka One',cursive; color: var(--accent2); }
-
-  /* Mobile controls */
-  #mobile-controls {
-    display: none;
-    position: absolute;
-    bottom: 80px; left: 16px;
-    gap: 6px;
-    flex-direction: column;
-    align-items: center;
-  }
-  @media (max-width: 640px) { #mobile-controls { display: flex; } }
-  .dpad { display:grid; grid-template-columns: repeat(3, 50px); gap: 4px; }
-  .dpad-btn {
-    width:50px; height:50px;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 10px;
-    color:#fff;
-    font-size:1.2rem;
-    cursor:pointer;
-    user-select:none;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .dpad-btn:active { background: rgba(255,255,255,0.35); }
-  #mobile-actions {
-    display: flex;
-    gap: 8px;
-    position: absolute;
-    bottom: 80px; right: 16px;
-  }
-  @media (min-width: 641px) { #mobile-actions { display:none; } }
-  .action-btn {
-    width:60px; height:60px;
-    border-radius: 50%;
-    border: none;
-    font-family: 'Fredoka One', cursive;
-    font-size: 0.75rem;
-    cursor: pointer;
-    user-select: none;
-    display: flex; align-items:center; justify-content:center;
-    flex-direction: column;
-    gap: 2px;
-    letter-spacing: 1px;
-  }
-  #mob-jump  { background: #4d96ff; color:#fff; }
-  #mob-punch { background: #ff6b6b; color:#fff; }
-
-  /* Power meter */
-  #power-meter-container {
-    position: absolute;
-    bottom: 50px; left: 50%; transform: translateX(-50%);
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    pointer-events: none;
-  }
-  #power-label {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1rem;
-    color: #fff;
-    letter-spacing: 2px;
-  }
-  #power-bar-bg {
-    width: 220px;
-    height: 22px;
-    background: rgba(0,0,0,0.5);
-    border: 2px solid rgba(255,255,255,0.3);
-    border-radius: 20px;
-    overflow: hidden;
-  }
-  #power-bar {
-    height: 100%;
-    width: 0%;
-    border-radius: 20px;
-    background: linear-gradient(90deg, #6bcb77, #ffd93d, #ff6b6b);
-    transition: width 0.05s linear;
-  }
-  #power-number {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.8rem;
-    color: #ffd93d;
-    text-shadow: 0 0 20px rgba(255,217,61,0.8);
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius:4px; }
+#ctrl-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:30px;padding:5px 16px;font-size:.7rem;color:rgba(255,255,255,.4);letter-spacing:1px;pointer-events:none;}
+#chat-wrap{position:absolute;bottom:45px;right:11px;width:260px;display:flex;flex-direction:column;gap:4px;}
+#chat-log{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:6px 8px;max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;backdrop-filter:blur(8px);}
+.chat-msg{font-size:.73rem;line-height:1.4;}
+.chat-msg .sender{font-weight:800;}
+.chat-msg.system{color:#ffd93d;font-style:italic;}
+#chat-row{display:flex;gap:4px;}
+#chat-input{flex:1;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:5px 12px;color:#fff;font-family:'Nunito',sans-serif;font-size:.76rem;outline:none;}
+#chat-send{background:var(--accent);border:none;border-radius:20px;color:#fff;padding:5px 12px;font-family:'Fredoka One',cursive;cursor:pointer;font-size:.76rem;}
+#btn-leave{position:absolute;top:11px;right:11px;z-index:10;pointer-events:all;}
+.punch-flash{position:absolute;inset:0;pointer-events:none;background:rgba(255,100,100,.25);animation:flashOut .25s ease-out forwards;}
+@keyframes flashOut{to{opacity:0;}}
+#lb-modal{display:none;position:absolute;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(6px);}
+#lb-modal.open{display:flex;}
+#lb-inner{background:#1e1e3a;border:1px solid var(--border);border-radius:20px;padding:26px;width:min(370px,90vw);max-height:80vh;overflow-y:auto;}
+#lb-inner h2{font-family:'Fredoka One',cursive;color:var(--accent2);font-size:1.6rem;margin-bottom:12px;text-align:center;}
+.lb-row{display:flex;align-items:center;gap:9px;padding:8px 12px;background:rgba(255,255,255,.05);border-radius:10px;margin-bottom:4px;}
+.lb-rank{font-family:'Fredoka One',cursive;font-size:1rem;width:24px;color:rgba(255,255,255,.4);}
+.lb-rank.gold{color:#ffd700;}.lb-rank.silver{color:#c0c0c0;}.lb-rank.bronze{color:#cd7f32;}
+.lb-uname{flex:1;font-weight:700;}
+.lb-wins{font-family:'Fredoka One',cursive;color:var(--accent2);}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:4px;}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════ AUTH SCREEN ═══════════════ -->
+<!-- AUTH -->
 <div id="auth-screen" class="screen active">
-  <div class="logo">KNOCKOUT!</div>
-  <div class="tagline">Last one standing wins</div>
-
+  <div class="logo">KNOCKOUT! 🐧</div>
+  <div class="tagline">Last penguin standing wins</div>
   <div class="card">
-    <div style="display:flex;gap:8px;margin-bottom:4px">
-      <button class="btn btn-primary" id="tab-login"    onclick="switchTab('login')"    style="flex:1;font-size:0.95rem">Login</button>
-      <button class="btn btn-secondary" id="tab-register" onclick="switchTab('register')" style="flex:1;font-size:0.95rem">Register</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary"   id="tab-login"    onclick="switchTab('login')"    style="flex:1">Login</button>
+      <button class="btn btn-secondary" id="tab-register" onclick="switchTab('register')" style="flex:1">Register</button>
     </div>
-
-    <!-- Login -->
-    <div id="form-login">
-      <h2 style="margin-bottom:8px">👋 Welcome back!</h2>
-      <input id="login-user" type="text"     placeholder="Username" maxlength="16" autocomplete="off"/>
-      <input id="login-pass" type="password" placeholder="Password" maxlength="32"/>
-      <div id="login-err" style="color:#ff6b6b;font-size:0.85rem;min-height:18px"></div>
+    <div id="form-login" style="display:flex;flex-direction:column;gap:9px">
+      <h2>👋 Welcome back!</h2>
+      <input id="login-user" type="text"     placeholder="Username"  maxlength="16" autocomplete="off"/>
+      <input id="login-pass" type="password" placeholder="Password"  maxlength="32"/>
+      <div id="login-err" style="color:#ff6b6b;font-size:.8rem;min-height:16px"></div>
       <button class="btn btn-primary" onclick="doLogin()">▶ Login</button>
-      <div style="color:rgba(255,255,255,0.35);font-size:0.8rem;text-align:center">No account? Click Register above!</div>
+      <div style="color:rgba(255,255,255,.3);font-size:.76rem;text-align:center">No account? Click Register!</div>
     </div>
-
-    <!-- Register -->
-    <div id="form-register" style="display:none">
-      <h2 style="margin-bottom:8px">🆕 Create Account</h2>
-      <input id="reg-user" type="text"     placeholder="Choose a username" maxlength="16" autocomplete="off"/>
-      <input id="reg-pass" type="password" placeholder="Choose a password (min 4 chars)" maxlength="32"/>
-      <input id="reg-pass2" type="password" placeholder="Repeat password" maxlength="32"/>
-      <div id="reg-err" style="color:#ff6b6b;font-size:0.85rem;min-height:18px"></div>
+    <div id="form-register" style="display:none;flex-direction:column;gap:9px">
+      <h2>🆕 Create Account</h2>
+      <input id="reg-user"  type="text"     placeholder="Username"          maxlength="16" autocomplete="off"/>
+      <input id="reg-pass"  type="password" placeholder="Password (min 4)"  maxlength="32"/>
+      <input id="reg-pass2" type="password" placeholder="Repeat password"   maxlength="32"/>
+      <div id="reg-err" style="color:#ff6b6b;font-size:.8rem;min-height:16px"></div>
       <button class="btn btn-green" onclick="doRegister()">✅ Create Account</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════ MENU SCREEN ═══════════════ -->
+<!-- MENU -->
 <div id="menu-screen" class="screen">
-  <div class="logo">KNOCKOUT!</div>
-  <div class="tagline">Last one standing wins</div>
-
+  <div class="logo">KNOCKOUT! 🐧</div>
+  <div class="tagline">Last penguin standing wins</div>
   <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
       <h2>🎮 Enter the Arena</h2>
-      <div id="account-badge" style="font-size:0.8rem;background:rgba(107,203,119,0.2);border:1px solid #6bcb77;border-radius:20px;padding:4px 12px;color:#6bcb77"></div>
+      <div id="account-badge" style="font-size:.72rem;background:rgba(107,203,119,.2);border:1px solid #6bcb77;border-radius:20px;padding:3px 9px;color:#6bcb77"></div>
     </div>
-    <input id="player-name" type="text" placeholder="Your name…" maxlength="16" value="" style="display:none"/>
-    <input id="lobby-name"  type="text" placeholder="Lobby name (create or join)" maxlength="24" value=""/>
+    <input id="lobby-name" type="text" placeholder="Lobby name (create or join)" maxlength="24"/>
+    <div id="skin-section">
+      <h3>🐧 Pick Your Penguin</h3>
+      <div id="skin-grid"></div>
+    </div>
     <div class="row">
-      <button class="btn btn-primary" onclick="joinLobby()">▶ Play</button>
-      <button class="btn btn-secondary" onclick="refreshLobbies()">🔄 Refresh</button>
+      <button class="btn btn-primary"   onclick="joinLobby()">▶ Play</button>
+      <button class="btn btn-secondary" onclick="refreshLobbies()">🔄 Lobbies</button>
     </div>
     <div class="divider"></div>
     <div id="lobby-list">
-      <div style="color:rgba(255,255,255,0.3);font-size:0.85rem;text-align:center;padding:10px">Click Refresh to see open lobbies</div>
+      <div style="color:rgba(255,255,255,.3);font-size:.8rem;text-align:center;padding:7px">Click Lobbies to see open games</div>
     </div>
   </div>
-
-  <div style="display:flex;gap:16px;align-items:center">
-    <button id="leaderboard-btn-menu" onclick="openLeaderboard()">🏆 View Leaderboard</button>
-    <button id="leaderboard-btn-menu" onclick="doLogout()" style="color:rgba(255,100,100,0.6)">🚪 Logout</button>
+  <div id="menu-footer">
+    <button class="link-btn" onclick="openLeaderboard()">🏆 Leaderboard</button>
+    <button class="link-btn" onclick="doLogout()" style="color:rgba(255,100,100,.5)">🚪 Logout</button>
   </div>
 </div>
 
-<!-- ═══════════════ GAME SCREEN ═══════════════ -->
+<!-- GAME -->
 <div id="game-screen" class="screen">
   <canvas id="canvas"></canvas>
-
-  <!-- HUD -->
   <div id="hud">
-    <div id="hud-left">
-      <div class="hud-panel" id="player-list-hud"></div>
-    </div>
-    <div id="hud-center">
-      <div id="status-hud"></div>
-      <div id="countdown-hud"></div>
-    </div>
-    <div id="hud-right">
-      <div class="hud-panel" id="kills-hud" style="text-align:right"></div>
-    </div>
+    <div><div class="hud-panel" id="player-list-hud"></div></div>
+    <div id="hud-center"><div id="status-hud"></div><div id="countdown-hud"></div></div>
+    <div><div class="hud-panel" id="kills-hud" style="text-align:right"></div></div>
   </div>
-
-  <div id="winner-banner">
-    <h2 id="winner-text">🏆 Winner!</h2>
-    <p id="winner-sub">Returning to lobby…</p>
+  <div id="winner-banner"><h2 id="winner-text">🏆 Winner!</h2><p id="winner-sub"></p></div>
+  <div id="power-wrap">
+    <div id="power-title">⚡ POWER</div>
+    <div id="power-track"><div id="power-fill"></div></div>
+    <div id="power-num">0</div>
   </div>
-
-  <div id="controls-hint">WASD — Move &nbsp;|&nbsp; Space — Jump &nbsp;|&nbsp; Hold F — Charge &nbsp;|&nbsp; Release F — PUNCH 👊</div>
-
-  <!-- Power meter -->
-  <div id="power-meter-container">
-    <div id="power-label">⚡ POWER</div>
-    <div id="power-bar-bg"><div id="power-bar"></div></div>
-    <div id="power-number">0</div>
-  </div>
-
-  <!-- Chat -->
-  <div id="chat-container">
+  <div id="ctrl-hint">WASD — Move &nbsp;|&nbsp; SPACE — Jump &nbsp;|&nbsp; Hold F or Hold Click — Charge Punch 🐧👊</div>
+  <div id="chat-wrap">
     <div id="chat-log"></div>
-    <div id="chat-input-row">
+    <div id="chat-row">
       <input id="chat-input" type="text" placeholder="Chat…" maxlength="200" autocomplete="off"/>
       <button id="chat-send" onclick="sendChat()">➤</button>
     </div>
   </div>
-
-  <!-- Leave button -->
-  <button class="btn btn-secondary" id="btn-leave" onclick="leaveGame()" style="pointer-events:all">✕ Leave</button>
-
-  <!-- Mobile D-pad -->
-  <div id="mobile-controls">
-    <div class="dpad">
-      <div></div>
-      <button class="dpad-btn" ontouchstart="mobileDir('up',true)" ontouchend="mobileDir('up',false)">▲</button>
-      <div></div>
-      <button class="dpad-btn" ontouchstart="mobileDir('left',true)" ontouchend="mobileDir('left',false)">◀</button>
-      <div></div>
-      <button class="dpad-btn" ontouchstart="mobileDir('right',true)" ontouchend="mobileDir('right',false)">▶</button>
-      <div></div>
-      <button class="dpad-btn" ontouchstart="mobileDir('down',true)" ontouchend="mobileDir('down',false)">▼</button>
-      <div></div>
-    </div>
-  </div>
-  <div id="mobile-actions">
-    <button class="action-btn" id="mob-jump"  ontouchstart="mobileAction('jump')"  ontouchend="mobileAction('jump_up')">⬆<span>JUMP</span></button>
-    <button class="action-btn" id="mob-punch" ontouchstart="mobileAction('punch')" ontouchend="">👊<span>PUNCH</span></button>
-  </div>
+  <button class="btn btn-secondary" id="btn-leave" onclick="leaveGame()">✕ Leave</button>
 </div>
 
-<!-- ═══════════════ LEADERBOARD MODAL ═══════════════ -->
+<!-- LEADERBOARD -->
 <div id="lb-modal">
-  <div id="lb-modal-inner">
+  <div id="lb-inner">
     <h2>🏆 Leaderboard</h2>
     <div id="lb-entries"></div>
-    <button class="btn btn-secondary" style="width:100%;margin-top:16px" onclick="closeLB()">Close</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:12px" onclick="closeLB()">Close</button>
   </div>
 </div>
 
-<!-- ═══════════════ THREE.JS ═══════════════ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ═══════════════════════════════════════════════════════════════════
-//  GAME CLIENT
-// ═══════════════════════════════════════════════════════════════════
-const WS_HOST = location.hostname;
-const WS_PORT = location.port || (location.protocol === 'https:' ? 443 : 80);
 const API_BASE = `${location.protocol}//${location.host}`;
+const WS_PROTO = location.protocol==='https:'?'wss':'ws';
 
-let ws         = null;
-let myId       = null;
-let lobbyId    = null;
-let gameState  = null;
-let playerName = "";
+// ── SKINS ──────────────────────────────────────────────
+const SKINS = [
+  {id:'classic', label:'Classic',    body:'#1a1a2e',beak:'#ffd93d',belly:'#ffffff',feet:'#ff9a3c'},
+  {id:'red',     label:'Red',        body:'#c0392b',beak:'#ffd93d',belly:'#f5b7b1',feet:'#e74c3c'},
+  {id:'blue',    label:'Blue',       body:'#1a5276',beak:'#ffd93d',belly:'#aed6f1',feet:'#2980b9'},
+  {id:'green',   label:'Green',      body:'#1e8449',beak:'#ffd93d',belly:'#a9dfbf',feet:'#27ae60'},
+  {id:'purple',  label:'Purple',     body:'#6c3483',beak:'#ffd93d',belly:'#d7bde2',feet:'#8e44ad'},
+  {id:'pink',    label:'Pink',       body:'#c0478a',beak:'#ffd93d',belly:'#f9d0e7',feet:'#e91e8c'},
+  {id:'yellow',  label:'Yellow',     body:'#d4ac0d',beak:'#e67e22',belly:'#fef9e7',feet:'#f39c12'},
+  {id:'tux',     label:'Tuxedo 🤵',  body:'#1c1c1c',beak:'#e67e22',belly:'#ffffff',feet:'#e67e22'},
+  {id:'rainbow', label:'Rainbow 🌈', body:'#ff6b6b',beak:'#6bcb77',belly:'#ffd93d',feet:'#4d96ff'},
+  {id:'ice',     label:'Ice ❄️',     body:'#a8d8ea',beak:'#74b9ff',belly:'#ffffff',feet:'#0984e3'},
+];
+let selectedSkin = SKINS[0];
 
-// Three.js globals
-let renderer, scene, camera, clock;
-let meshes = {};        // playerId → { body, head, shadow }
-let platform, skybox;
-const keys = {};
-let inputInterval = null;
-const mobileDirs  = { up:false, down:false, left:false, right:false };
-let mobileJump    = false;
-let mobilePunch   = false;
+function buildSkinGrid() {
+  document.getElementById('skin-grid').innerHTML = SKINS.map(s=>`
+    <button class="skin-btn ${s.id===selectedSkin.id?'selected':''}" onclick="selectSkin('${s.id}')"
+      title="${s.label}" style="background:${s.body};color:${s.belly}">🐧</button>
+  `).join('');
+}
+function selectSkin(id){ selectedSkin=SKINS.find(s=>s.id===id)||SKINS[0]; buildSkinGrid(); }
+buildSkinGrid();
 
-// ─── Init Three.js ───────────────────────────────────────────────
-function initThree() {
-  const canvas = document.getElementById('canvas');
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// ── STATE ──────────────────────────────────────────────
+let loggedInUser=null, ws=null, myId=null, gameState=null;
+const keys={}, mobileDirs={up:false,down:false,left:false,right:false};
+let mobileJump=false, inputInterval=null;
+let isCharging=false, chargeStart=0;
+const MAX_CHARGE=2000;
+let platformSize=24;
+
+// ── THREE.JS ───────────────────────────────────────────
+let renderer,scene,camera,clock,meshes={};
+let platformGroup=null;
+let camPos=new THREE.Vector3(0,10,16);
+let camLook=new THREE.Vector3(0,1,0);
+
+function initThree(){
+  const cv=document.getElementById('canvas');
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;
   renderer.setClearColor(0x87ceeb);
-
-  scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x87ceeb, 0.035);
-  clock = new THREE.Clock();
-
-  // Camera
-  camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
-  camera.position.set(0, 18, 26);
-  camera.lookAt(0, 0, 0);
-
-  // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambient);
-
-  const sun = new THREE.DirectionalLight(0xfffbe0, 1.4);
-  sun.position.set(20, 40, 20);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.camera.near = 0.5;
-  sun.shadow.camera.far = 200;
-  sun.shadow.camera.left = -30;
-  sun.shadow.camera.right = 30;
-  sun.shadow.camera.top = 30;
-  sun.shadow.camera.bottom = -30;
+  scene=new THREE.Scene();
+  scene.fog=new THREE.FogExp2(0x87ceeb,0.025);
+  clock=new THREE.Clock();
+  camera=new THREE.PerspectiveCamera(65,1,0.1,300);
+  scene.add(new THREE.AmbientLight(0xffffff,0.7));
+  const sun=new THREE.DirectionalLight(0xfffbe0,1.3);
+  sun.position.set(20,40,20); sun.castShadow=true;
+  sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.left=sun.shadow.camera.bottom=-30;
+  sun.shadow.camera.right=sun.shadow.camera.top=30;
   scene.add(sun);
-
-  const fill = new THREE.DirectionalLight(0x88aaff, 0.4);
-  fill.position.set(-15, 10, -15);
-  scene.add(fill);
-
-  // Platform
-  buildPlatform();
-
-  // Sky sphere
-  const skyGeo = new THREE.SphereGeometry(150, 16, 16);
-  const skyMat = new THREE.MeshBasicMaterial({
-    color: 0x87ceeb,
-    side: THREE.BackSide
-  });
-  skybox = new THREE.Mesh(skyGeo, skyMat);
-  scene.add(skybox);
-
-  // Clouds
-  buildClouds();
-
-  // Resize
-  onResize();
-  window.addEventListener('resize', onResize);
-
-  // Animate
+  const fill=new THREE.DirectionalLight(0x88aaff,0.3);
+  fill.position.set(-15,10,-15); scene.add(fill);
+  buildPlatform(); buildSky(); buildClouds();
+  onResize(); window.addEventListener('resize',onResize);
   animate();
 }
 
-let platformMesh = null;
-let platformSize = 24;
-
-function buildPlatform() {
-  if (platformMesh) { scene.remove(platformMesh); }
-  const s = platformSize;
-  const geo = new THREE.BoxGeometry(s, 1.2, s);
-  const mat = new THREE.MeshLambertMaterial({ color: 0x5cb85c });
-  platformMesh = new THREE.Mesh(geo, mat);
-  platformMesh.position.y = -0.6;
-  platformMesh.receiveShadow = true;
-  scene.add(platformMesh);
-
-  // Top face
-  const topGeo = new THREE.PlaneGeometry(s, s);
-  const topMat = new THREE.MeshLambertMaterial({ color: 0x76d17e });
-  const top = new THREE.Mesh(topGeo, topMat);
-  top.rotation.x = -Math.PI / 2;
-  top.position.y = 0.01;
-  scene.add(top);
-
+function buildPlatform(){
+  if(platformGroup){ scene.remove(platformGroup); }
+  platformGroup=new THREE.Group();
+  const s=platformSize;
+  const slab=new THREE.Mesh(new THREE.BoxGeometry(s,1.4,s),new THREE.MeshLambertMaterial({color:0x4a9e54}));
+  slab.position.y=-0.7; slab.receiveShadow=true; platformGroup.add(slab);
+  const top=new THREE.Mesh(new THREE.BoxGeometry(s,0.12,s),new THREE.MeshLambertMaterial({color:0x6bcb77}));
+  top.position.y=0.07; platformGroup.add(top);
   // Danger stripes on edges
-  const edgeMat1 = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
-  const edgeMat2 = new THREE.MeshLambertMaterial({ color: 0xff4444 });
-  const stripeW = 0.6;
-  [[-s/2, 0], [s/2, 0], [0, -s/2], [0, s/2]].forEach(([ex, ez], i) => {
-    const isX = i < 2;
-    const sg = new THREE.BoxGeometry(isX ? stripeW : s, 0.15, isX ? s : stripeW);
-    const stripe = new THREE.Mesh(sg, i % 2 === 0 ? edgeMat1 : edgeMat2);
-    stripe.position.set(ex, 0.08, ez);
-    scene.add(stripe);
-  });
-
-  // Void below
-  const voidGeo = new THREE.BoxGeometry(s + 10, 20, s + 10);
-  const voidMat = new THREE.MeshBasicMaterial({ color: 0x1a1a2e, side: THREE.BackSide, transparent: true, opacity: 0.4 });
-  const voidMesh = new THREE.Mesh(voidGeo, voidMat);
-  voidMesh.position.y = -10;
-  scene.add(voidMesh);
+  const c1=new THREE.MeshLambertMaterial({color:0xffcc00});
+  const c2=new THREE.MeshLambertMaterial({color:0xff4444});
+  const hw=s/2;
+  for(let side=0;side<4;side++){
+    for(let j=0;j<Math.floor(s/2);j++){
+      const st=new THREE.Mesh(new THREE.BoxGeometry(0.65,0.1,1.7),j%2===0?c1:c2);
+      const off=-s/2+0.85+j*2;
+      if(side===0) st.position.set(hw, 0.07, off);
+      else if(side===1) st.position.set(-hw,0.07, off);
+      else if(side===2) st.position.set(off,0.07, hw);
+      else st.position.set(off,0.07,-hw);
+      if(side>1) st.rotation.y=Math.PI/2;
+      platformGroup.add(st);
+    }
+  }
+  scene.add(platformGroup);
 }
 
-function buildClouds() {
-  for (let i = 0; i < 12; i++) {
-    const cloud = new THREE.Group();
-    const n = Math.floor(Math.random() * 3) + 2;
-    for (let j = 0; j < n; j++) {
-      const r = Math.random() * 3 + 2;
-      const sg = new THREE.SphereGeometry(r, 7, 7);
-      const sm = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const s  = new THREE.Mesh(sg, sm);
-      s.position.set(j * 3 - n, Math.random() * 1.5, Math.random() * 2 - 1);
-      cloud.add(s);
+function buildSky(){
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(150,16,16),new THREE.MeshBasicMaterial({color:0x87ceeb,side:THREE.BackSide})));
+}
+
+function buildClouds(){
+  for(let i=0;i<10;i++){
+    const g=new THREE.Group();
+    const n=Math.floor(Math.random()*3)+2;
+    for(let j=0;j<n;j++){
+      const r=Math.random()*3+1.5;
+      const m=new THREE.Mesh(new THREE.SphereGeometry(r,7,7),new THREE.MeshBasicMaterial({color:0xffffff}));
+      m.position.set(j*3-n,Math.random()*1.5,Math.random()*2-1); g.add(m);
     }
-    const angle  = (i / 12) * Math.PI * 2;
-    const radius = 40 + Math.random() * 30;
-    cloud.position.set(
-      Math.cos(angle) * radius,
-      20 + Math.random() * 20,
-      Math.sin(angle) * radius
-    );
-    scene.add(cloud);
+    const a=(i/10)*Math.PI*2, rad=40+Math.random()*30;
+    g.position.set(Math.cos(a)*rad,18+Math.random()*20,Math.sin(a)*rad);
+    scene.add(g);
   }
 }
 
-function makePlayerMesh(color) {
-  const group = new THREE.Group();
-  const c = new THREE.Color(color);
+// ── PENGUIN MODEL ──────────────────────────────────────
+function makePenguin(skin){
+  const g=new THREE.Group();
+  const C=c=>new THREE.Color(c);
+  const M=c=>new THREE.MeshLambertMaterial({color:C(c)});
 
-  // Body (box character — cartoon blocky)
-  const bodyGeo = new THREE.BoxGeometry(0.9, 1.1, 0.55);
-  const bodyMat = new THREE.MeshLambertMaterial({ color: c });
-  const body = new THREE.Mesh(bodyGeo, bodyMat);
-  body.position.y = 0.55;
-  body.castShadow = true;
-  group.add(body);
-
+  // Body
+  const body=new THREE.Mesh(new THREE.SphereGeometry(0.4,10,10),M(skin.body));
+  body.scale.set(1,1.3,0.9); body.position.y=0.52; body.castShadow=true; g.add(body);
+  // Belly
+  const belly=new THREE.Mesh(new THREE.SphereGeometry(0.26,8,8),M(skin.belly));
+  belly.scale.set(0.75,1.1,0.35); belly.position.set(0,0.52,0.3); g.add(belly);
   // Head
-  const headGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-  const headMat = new THREE.MeshLambertMaterial({ color: 0xffcc99 });
-  const head = new THREE.Mesh(headGeo, headMat);
-  head.position.y = 1.5;
-  head.castShadow = true;
-  group.add(head);
-
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.3,10,10),M(skin.body));
+  head.position.y=1.15; head.castShadow=true; g.add(head);
   // Eyes
-  const eyeGeo = new THREE.BoxGeometry(0.12, 0.12, 0.05);
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
-  [-0.2, 0.2].forEach(ex => {
-    const eye = new THREE.Mesh(eyeGeo, eyeMat);
-    eye.position.set(ex, 1.56, 0.41);
-    group.add(eye);
+  [-0.12,0.12].forEach(ex=>{
+    const ew=new THREE.Mesh(new THREE.SphereGeometry(0.075,6,6),M('#ffffff'));
+    ew.position.set(ex,1.21,0.24); g.add(ew);
+    const ep=new THREE.Mesh(new THREE.SphereGeometry(0.04,5,5),M('#111111'));
+    ep.position.set(ex,1.21,0.3); g.add(ep);
+  });
+  // Beak
+  const beak=new THREE.Mesh(new THREE.ConeGeometry(0.075,0.15,5),M(skin.beak));
+  beak.rotation.x=Math.PI/2; beak.position.set(0,1.15,0.33); g.add(beak);
+  // Wings
+  [-0.48,0.48].forEach((wx,i)=>{
+    const w=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.48,0.2),M(skin.body));
+    w.position.set(wx,0.52,0); w.rotation.z=(i===0?1:-1)*0.28; g.add(w);
+  });
+  // Feet
+  [-0.13,0.13].forEach(fx=>{
+    const f=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.06,0.3),M(skin.feet));
+    f.position.set(fx,0.04,0.07); g.add(f);
   });
 
-  // Legs
-  const legGeo = new THREE.BoxGeometry(0.35, 0.6, 0.35);
-  const legMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(color).multiplyScalar(0.7) });
-  [-0.22, 0.22].forEach(lx => {
-    const leg = new THREE.Mesh(legGeo, legMat);
-    leg.position.set(lx, -0.3, 0);
-    group.add(leg);
-  });
-
-  // Arms
-  const armGeo = new THREE.BoxGeometry(0.28, 0.65, 0.28);
-  const armMat = new THREE.MeshLambertMaterial({ color: c });
-  [-0.64, 0.64].forEach(ax => {
-    const arm = new THREE.Mesh(armGeo, armMat);
-    arm.position.set(ax, 0.45, 0);
-    group.add(arm);
-  });
-
-  // Shadow blob
-  const shadowGeo = new THREE.CircleGeometry(0.55, 12);
-  const shadowMat = new THREE.MeshBasicMaterial({
-    color: 0x000000, transparent: true, opacity: 0.25
-  });
-  const shadow = new THREE.Mesh(shadowGeo, shadowMat);
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.position.y = 0.02;
-
-  // Name label (canvas texture)
-  return { group, shadow };
+  const shadow=new THREE.Mesh(
+    new THREE.CircleGeometry(0.42,10),
+    new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.18})
+  );
+  shadow.rotation.x=-Math.PI/2; shadow.position.y=0.02;
+  return {group:g,shadow};
 }
 
-function onResize() {
-  const w = window.innerWidth, h = window.innerHeight;
-  renderer.setSize(w, h);
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
+function onResize(){
+  const w=window.innerWidth,h=window.innerHeight;
+  renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix();
 }
 
-// ─── Animation loop ──────────────────────────────────────────────
-let cameraAngle = 0;
-let cameraTarget = new THREE.Vector3(0, 0, 0);
+// ── 3rd PERSON CAMERA ─────────────────────────────────
+const CAM_DIST=8, CAM_HEIGHT=5;
 
-function animate() {
+function animate(){
   requestAnimationFrame(animate);
-  const dt = clock.getDelta();
+  clock.getDelta();
+  const t=Date.now()*0.007;
 
-  if (gameState && gameState.state === 'playing') {
-    // Smooth camera follow my player
-    const me = gameState.players.find(p => p.id === myId);
-    if (me) {
-      cameraTarget.lerp(new THREE.Vector3(me.x, 0, me.z), 0.05);
-      camera.position.x += (cameraTarget.x - camera.position.x) * 0.04;
-      camera.position.z += (cameraTarget.z + 26 - camera.position.z) * 0.04;
-      camera.position.y = 18;
-      camera.lookAt(cameraTarget.x, 0, cameraTarget.z);
+  if(gameState&&gameState.state==='playing'){
+    const me=gameState.players.find(p=>p.id===myId);
+    if(me&&me.alive){
+      const angle=me.rot_y||0;
+      // Position camera BEHIND the penguin
+      const tx=me.x+Math.sin(angle)*CAM_DIST;
+      const ty=me.y+CAM_HEIGHT;
+      const tz=me.z+Math.cos(angle)*CAM_DIST;
+      camPos.lerp(new THREE.Vector3(tx,ty,tz),0.1);
+      camLook.lerp(new THREE.Vector3(me.x,me.y+1,me.z),0.1);
+      camera.position.copy(camPos);
+      camera.lookAt(camLook);
     }
   } else {
-    // Orbit slowly in lobby
-    cameraAngle += dt * 0.2;
-    camera.position.x = Math.sin(cameraAngle) * 26;
-    camera.position.z = Math.cos(cameraAngle) * 26;
-    camera.position.y = 18;
-    camera.lookAt(0, 0, 0);
-    cameraTarget.set(0,0,0);
+    const orbit=Date.now()*0.0003;
+    camera.position.set(Math.sin(orbit)*22,14,Math.cos(orbit)*22);
+    camera.lookAt(0,1,0);
+    camPos.set(Math.sin(orbit)*22,14,Math.cos(orbit)*22);
   }
 
-  // Animate player meshes (bob legs when moving)
-  if (gameState) {
-    const t = Date.now() * 0.006;
-    gameState.players.forEach(p => {
-      const m = meshes[p.id];
-      if (!m) return;
-      const speed2 = p.vx*p.vx + p.vz*p.vz;
-      if (p.alive) {
-        m.group.position.set(p.x, p.y, p.z);
-        m.group.rotation.y = p.rot_y;
-        // Bob
-        if (speed2 > 0.5) {
-          m.group.children[0].rotation.z = Math.sin(t * 2) * 0.08; // body wobble
-        }
-        m.shadow.position.set(p.x, 0.02, p.z);
-        m.group.visible  = true;
-        m.shadow.visible = p.y < 5;
-      } else {
-        m.group.visible  = false;
-        m.shadow.visible = false;
-      }
+  // Animate penguins
+  if(gameState){
+    gameState.players.forEach(p=>{
+      const m=meshes[p.id]; if(!m)return;
+      const spd2=p.vx*p.vx+p.vz*p.vz;
+      if(p.alive){
+        m.group.position.set(p.x,p.y,p.z);
+        m.group.rotation.y=p.rot_y||0;
+        if(spd2>0.3){
+          m.group.rotation.z=Math.sin(t*2)*0.1;
+          m.group.position.y=p.y+Math.abs(Math.sin(t*3))*0.05;
+        } else { m.group.rotation.z*=0.85; }
+        m.group.visible=true;
+        m.shadow.visible=p.y<4;
+        m.shadow.position.set(p.x,0.02,p.z);
+      } else { m.group.visible=false; m.shadow.visible=false; }
     });
   }
-
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
 
-// ─── Sync game state → meshes ────────────────────────────────────
-function syncMeshes(players) {
-  const seen = new Set();
-  players.forEach(p => {
+function syncMeshes(players){
+  const seen=new Set();
+  players.forEach(p=>{
     seen.add(p.id);
-    if (!meshes[p.id]) {
-      const { group, shadow } = makePlayerMesh(p.color);
-      scene.add(group);
-      scene.add(shadow);
-      meshes[p.id] = { group, shadow };
+    if(!meshes[p.id]){
+      const skin=p.id===myId?selectedSkin:SKINS[Math.floor(Math.random()*SKINS.length)];
+      const {group,shadow}=makePenguin(skin);
+      scene.add(group); scene.add(shadow);
+      meshes[p.id]={group,shadow};
     }
   });
-  // Remove old meshes
-  Object.keys(meshes).forEach(id => {
-    if (!seen.has(id)) {
-      scene.remove(meshes[id].group);
-      scene.remove(meshes[id].shadow);
-      delete meshes[id];
-    }
+  Object.keys(meshes).forEach(id=>{
+    if(!seen.has(id)){ scene.remove(meshes[id].group); scene.remove(meshes[id].shadow); delete meshes[id]; }
   });
 }
 
-// ─── HUD update ──────────────────────────────────────────────────
-function updateHUD(gs) {
-  // Player list
-  const plHud = document.getElementById('player-list-hud');
-  plHud.innerHTML = gs.players.map(p => `
-    <div class="hud-player ${p.alive ? '' : 'dead'}">
+// ── HUD ────────────────────────────────────────────────
+function updateHUD(gs){
+  document.getElementById('player-list-hud').innerHTML=gs.players.map(p=>`
+    <div class="hud-player ${p.alive?'':'dead'}">
       <div class="hud-dot" style="background:${p.color}"></div>
-      <span>${p.name}${p.is_ai ? ' 🤖' : ''}</span>
-    </div>
-  `).join('');
-
-  const me = gs.players.find(p => p.id === myId);
-  if (me) {
-    document.getElementById('kills-hud').innerHTML = `
-      <div>💀 Kills: <b>${me.kills}</b></div>
-    `;
+      <span>${escHtml(p.name)}${p.is_ai?' 🤖':''}</span>
+    </div>`).join('');
+  const me=gs.players.find(p=>p.id===myId);
+  if(me) document.getElementById('kills-hud').innerHTML=`💀 <b>${me.kills}</b> kills`;
+  const stat=document.getElementById('status-hud');
+  const cd=document.getElementById('countdown-hud');
+  const win=document.getElementById('winner-banner');
+  if(gs.state==='waiting'){ stat.textContent='⏳ Waiting…'; cd.textContent=''; win.style.display='none'; }
+  else if(gs.state==='countdown'){ stat.textContent='🐧 Get Ready!'; cd.textContent=gs.countdown>0?gs.countdown:''; }
+  else if(gs.state==='playing'){ stat.textContent=''; cd.textContent=''; win.style.display='none'; }
+  else if(gs.state==='ended'){
+    const winner=gs.players.find(p=>p.id===gs.winner);
+    win.style.display='block';
+    document.getElementById('winner-text').textContent=winner?`🏆 ${winner.name} wins!`:`💥 Draw!`;
+    document.getElementById('winner-sub').textContent='Returning to lobby…';
+    stat.textContent=''; cd.textContent='';
   }
+}
 
-  // Status
-  const statEl = document.getElementById('status-hud');
-  const cdEl   = document.getElementById('countdown-hud');
-  const winEl  = document.getElementById('winner-banner');
+// ── WEBSOCKET ──────────────────────────────────────────
+function connect(name,lid){
+  ws=new WebSocket(`${WS_PROTO}://${location.host}/ws/${encodeURIComponent(lid)}/${encodeURIComponent(name)}`);
+  ws.onopen=()=>startInputLoop();
+  ws.onmessage=e=>handleMessage(JSON.parse(e.data));
+  ws.onclose=()=>stopInputLoop();
+  ws.onerror=()=>{ alert('Could not connect!'); showScreen('menu-screen'); };
+}
 
-  if (gs.state === 'waiting') {
-    statEl.textContent = '⏳ Waiting for players…';
-    cdEl.textContent   = '';
-    winEl.style.display = 'none';
-  } else if (gs.state === 'countdown') {
-    statEl.textContent = '🥊 Get Ready!';
-    cdEl.textContent   = gs.countdown > 0 ? gs.countdown : '';
-  } else if (gs.state === 'playing') {
-    statEl.textContent = '';
-    cdEl.textContent   = '';
-    winEl.style.display = 'none';
-  } else if (gs.state === 'ended') {
-    const winner = gs.players.find(p => p.id === gs.winner);
-    if (winner) {
-      winEl.style.display = 'block';
-      document.getElementById('winner-text').textContent = `🏆 ${winner.name} wins!`;
-      document.getElementById('winner-sub').textContent  = 'Returning to lobby in 5s…';
-    } else {
-      winEl.style.display = 'block';
-      document.getElementById('winner-text').textContent = `💥 It's a Draw!`;
-      document.getElementById('winner-sub').textContent  = 'Returning to lobby…';
+function handleMessage(msg){
+  if(msg.type==='joined'){ myId=msg.your_id; }
+  else if(msg.type==='game_state'){
+    gameState=msg;
+    if(msg.platform_size&&msg.platform_size!==platformSize){
+      platformSize=msg.platform_size; buildPlatform();
+      Object.values(meshes).forEach(m=>{ scene.remove(m.group); scene.remove(m.shadow); }); meshes={};
     }
-    statEl.textContent = '';
-    cdEl.textContent   = '';
-  }
+    syncMeshes(msg.players); updateHUD(msg);
+  } else if(msg.type==='chat'){ appendChat(msg); }
+  else if(msg.type==='error'){ alert(msg.msg); leaveGame(); }
 }
 
-// ─── WebSocket ───────────────────────────────────────────────────
-function connect(name, lId) {
-  playerName = name;
-  lobbyId    = lId;
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(`${proto}://${location.host}/ws/${encodeURIComponent(lId)}/${encodeURIComponent(name)}`);
+// ── INPUT ──────────────────────────────────────────────
+function startInputLoop(){ inputInterval=setInterval(sendInput,50); }
+function stopInputLoop(){ clearInterval(inputInterval); }
 
-  ws.onopen = () => {
-    startInputLoop();
-  };
-
-  ws.onmessage = (ev) => {
-    const msg = JSON.parse(ev.data);
-    handleMessage(msg);
-  };
-
-  ws.onclose = () => {
-    stopInputLoop();
-  };
-
-  ws.onerror = (e) => {
-    console.error('WS error', e);
-    alert('Could not connect to server. Make sure server.py is running on port 8000.');
-    showScreen('menu-screen');
-  };
+function startCharge(){
+  if(isCharging||!gameState||gameState.state!=='playing')return;
+  isCharging=true; chargeStart=Date.now();
+  document.getElementById('power-wrap').style.display='flex';
 }
-
-function handleMessage(msg) {
-  if (msg.type === 'joined') {
-    myId = msg.your_id;
-  } else if (msg.type === 'game_state') {
-    gameState = msg;
-    // Rebuild platform if size changed
-    if (msg.platform_size && msg.platform_size !== platformSize) {
-      platformSize = msg.platform_size;
-      scene.clear();
-      buildPlatform();
-      buildClouds();
-      const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambient);
-      const sun = new THREE.DirectionalLight(0xfffbe0, 1.4);
-      sun.position.set(20, 40, 20);
-      sun.castShadow = true;
-      scene.add(sun);
-      meshes = {};
-    }
-    syncMeshes(msg.players);
-    updateHUD(msg);
-  } else if (msg.type === 'chat') {
-    appendChat(msg);
-  } else if (msg.type === 'error') {
-    alert(msg.msg);
-    leaveGame();
-  }
-}
-
-// ─── Input loop ──────────────────────────────────────────────────
-function startInputLoop() {
-  inputInterval = setInterval(sendInput, 50);
-}
-function stopInputLoop() {
-  clearInterval(inputInterval);
-}
-
-let chargeStart = 0;
-let isCharging  = false;
-let chargeLevel = 0;
-const MAX_CHARGE_TIME = 2000; // 2 seconds = max power
-
-function startCharge() {
-  if (isCharging) return;
-  isCharging  = true;
-  chargeStart = Date.now();
-  document.getElementById('power-meter-container').style.display = 'flex';
-}
-
-function releaseCharge() {
-  if (!isCharging) return;
-  isCharging  = false;
-  const elapsed = Date.now() - chargeStart;
-  chargeLevel = Math.min(10, Math.round((elapsed / MAX_CHARGE_TIME) * 10));
-  document.getElementById('power-meter-container').style.display = 'none';
-  document.getElementById('power-bar').style.width = '0%';
-  document.getElementById('power-number').textContent = '0';
-  // Send punch with power
-  if (ws && ws.readyState === WebSocket.OPEN && gameState && gameState.state === 'playing') {
-    ws.send(JSON.stringify({ type: 'input', input: { dx:0, dz:0, punch: true, power: chargeLevel }}));
+function releaseCharge(){
+  if(!isCharging)return;
+  isCharging=false;
+  const pct=Math.min(1,(Date.now()-chargeStart)/MAX_CHARGE);
+  const power=Math.max(1,Math.round(pct*10));
+  document.getElementById('power-wrap').style.display='none';
+  document.getElementById('power-fill').style.width='0%';
+  document.getElementById('power-num').textContent='0';
+  if(ws&&ws.readyState===WebSocket.OPEN){
+    ws.send(JSON.stringify({type:'input',input:{dx:0,dz:0,punch:true,power}}));
     flashScreen();
   }
-  chargeLevel = 0;
+}
+function updateCharge(){
+  if(!isCharging)return;
+  const pct=Math.min(1,(Date.now()-chargeStart)/MAX_CHARGE);
+  document.getElementById('power-fill').style.width=(pct*100)+'%';
+  document.getElementById('power-num').textContent=Math.ceil(pct*10);
 }
 
-function updateChargeMeter() {
-  if (!isCharging) return;
-  const elapsed  = Date.now() - chargeStart;
-  const pct      = Math.min(1, elapsed / MAX_CHARGE_TIME);
-  const lvl      = Math.ceil(pct * 10);
-  document.getElementById('power-bar').style.width    = (pct * 100) + '%';
-  document.getElementById('power-number').textContent = lvl;
+function sendInput(){
+  if(!ws||ws.readyState!==WebSocket.OPEN)return;
+  updateCharge();
+  let dx=0,dz=0;
+  if(keys['ArrowUp']  ||keys['w']||keys['W']||mobileDirs.up)    dz-=1;
+  if(keys['ArrowDown']||keys['s']||keys['S']||mobileDirs.down)   dz+=1;
+  if(keys['ArrowLeft']||keys['a']||keys['A']||mobileDirs.left)   dx-=1;
+  if(keys['ArrowRight']||keys['d']||keys['D']||mobileDirs.right) dx+=1;
+  const jump=!!(keys[' ']||mobileJump); mobileJump=false;
+  if(dx!==0||dz!==0||jump)
+    ws.send(JSON.stringify({type:'input',input:{dx,dz,jump,punch:false,power:0}}));
 }
 
-function sendInput() {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  updateChargeMeter();
-  let dx = 0, dz = 0;
-  if (keys['ArrowUp']    || keys['w'] || keys['W'] || mobileDirs.up)    dz -= 1;
-  if (keys['ArrowDown']  || keys['s'] || keys['S'] || mobileDirs.down)  dz += 1;
-  if (keys['ArrowLeft']  || keys['a'] || keys['A'] || mobileDirs.left)  dx -= 1;
-  if (keys['ArrowRight'] || keys['d'] || keys['D'] || mobileDirs.right) dx += 1;
-
-  const ca  = cameraAngle;
-  const rdx = dx * Math.cos(-ca) - dz * Math.sin(-ca);
-  const rdz = dx * Math.sin(-ca) + dz * Math.cos(-ca);
-
-  const jump = !!(keys[' '] || mobileJump);
-  mobileJump = false;
-
-  if (dx !== 0 || dz !== 0 || jump) {
-    ws.send(JSON.stringify({ type: 'input', input: { dx: rdx, dz: rdz, jump, punch: false, power: 0 }}));
+document.addEventListener('keydown',e=>{
+  keys[e.key]=true;
+  if(e.key===' ')e.preventDefault();
+  if((e.key==='f'||e.key==='F')&&gameState?.state==='playing') startCharge();
+  if(e.key==='Enter'){
+    if(document.activeElement===document.getElementById('chat-input')) sendChat();
+    else if(document.getElementById('auth-screen').classList.contains('active')){
+      document.getElementById('form-login').style.display!=='none'?doLogin():doRegister();
+    }
   }
-}
+});
+document.addEventListener('keyup',e=>{ keys[e.key]=false; if(e.key==='f'||e.key==='F') releaseCharge(); });
+document.getElementById('canvas').addEventListener('mousedown',()=>startCharge());
+document.getElementById('canvas').addEventListener('mouseup',()=>releaseCharge());
 
-// ─── Chat ────────────────────────────────────────────────────────
-function appendChat(msg) {
-  const log = document.getElementById('chat-log');
-  const div = document.createElement('div');
-  div.className = 'chat-msg' + (msg.system ? ' system' : '');
-  if (msg.system) {
-    div.textContent = msg.msg;
-  } else {
-    div.innerHTML = `<span class="sender">${escHtml(msg.sender)}:</span> ${escHtml(msg.msg)}`;
-  }
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-}
-
-function sendChat() {
-  const inp = document.getElementById('chat-input');
-  const msg = inp.value.trim();
-  if (!msg || !ws) return;
-  ws.send(JSON.stringify({ type: 'chat', msg }));
-  inp.value = '';
-}
-
-// ─── Screens ─────────────────────────────────────────────────────
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-// ─── Auth ─────────────────────────────────────────────────────────
-let loggedInUser = null;
-
-function switchTab(tab) {
-  document.getElementById('form-login').style.display    = tab === 'login'    ? 'flex' : 'none';
-  document.getElementById('form-register').style.display = tab === 'register' ? 'flex' : 'none';
-  document.getElementById('form-login').style.flexDirection    = 'column';
-  document.getElementById('form-login').style.gap               = '10px';
-  document.getElementById('form-register').style.flexDirection = 'column';
-  document.getElementById('form-register').style.gap           = '10px';
-  document.getElementById('tab-login').className    = tab === 'login'    ? 'btn btn-primary'   : 'btn btn-secondary';
-  document.getElementById('tab-register').className = tab === 'register' ? 'btn btn-primary'   : 'btn btn-secondary';
+// ── AUTH ───────────────────────────────────────────────
+function switchTab(tab){
+  document.getElementById('form-login').style.display=tab==='login'?'flex':'none';
+  document.getElementById('form-register').style.display=tab==='register'?'flex':'none';
+  document.getElementById('tab-login').className=tab==='login'?'btn btn-primary':'btn btn-secondary';
+  document.getElementById('tab-register').className=tab==='register'?'btn btn-primary':'btn btn-secondary';
 }
 switchTab('login');
 
-async function doLogin() {
-  const user = document.getElementById('login-user').value.trim();
-  const pass = document.getElementById('login-pass').value;
-  const err  = document.getElementById('login-err');
-  if (!user || !pass) { err.textContent = 'Fill in both fields!'; return; }
-  try {
-    const res  = await fetch(`${API_BASE}/login`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username: user, password: pass })
-    });
-    const data = await res.json();
-    if (!data.ok) { err.textContent = data.msg; return; }
-    loggedInUser = data.username;
-    document.getElementById('player-name').value = loggedInUser;
-    document.getElementById('account-badge').textContent = `👤 ${loggedInUser} · 🏆 ${data.wins} wins`;
-    err.textContent = '';
-    showScreen('menu-screen');
-    refreshLobbies();
-  } catch(e) { err.textContent = 'Server offline — start server.py first!'; }
+async function doLogin(){
+  const user=document.getElementById('login-user').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-err');
+  if(!user||!pass){err.textContent='Fill in both fields!';return;}
+  try{
+    const r=await fetch(`${API_BASE}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
+    const d=await r.json();
+    if(!d.ok){err.textContent=d.msg;return;}
+    loggedInUser=d.username;
+    document.getElementById('account-badge').textContent=`👤 ${d.username} · 🏆 ${d.wins}W`;
+    err.textContent=''; showScreen('menu-screen'); refreshLobbies();
+  }catch{err.textContent='Server offline!';}
 }
 
-async function doRegister() {
-  const user  = document.getElementById('reg-user').value.trim();
-  const pass  = document.getElementById('reg-pass').value;
-  const pass2 = document.getElementById('reg-pass2').value;
-  const err   = document.getElementById('reg-err');
-  if (!user || !pass) { err.textContent = 'Fill in all fields!'; return; }
-  if (pass !== pass2) { err.textContent = 'Passwords don\'t match!'; return; }
-  try {
-    const res  = await fetch(`${API_BASE}/register`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username: user, password: pass })
-    });
-    const data = await res.json();
-    if (!data.ok) { err.textContent = data.msg; return; }
-    err.style.color = '#6bcb77';
-    err.textContent = '✅ Account created! Logging you in…';
-    setTimeout(() => {
-      document.getElementById('login-user').value = user;
-      document.getElementById('login-pass').value = pass;
-      switchTab('login');
-      doLogin();
-    }, 1000);
-  } catch(e) { err.textContent = 'Server offline — start server.py first!'; }
+async function doRegister(){
+  const user=document.getElementById('reg-user').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const pass2=document.getElementById('reg-pass2').value;
+  const err=document.getElementById('reg-err');
+  if(!user||!pass){err.textContent='Fill in all fields!';return;}
+  if(pass!==pass2){err.textContent="Passwords don't match!";return;}
+  try{
+    const r=await fetch(`${API_BASE}/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
+    const d=await r.json();
+    if(!d.ok){err.textContent=d.msg;return;}
+    err.style.color='#6bcb77'; err.textContent='✅ Account created! Logging in…';
+    setTimeout(()=>{ document.getElementById('login-user').value=user; document.getElementById('login-pass').value=pass; switchTab('login'); doLogin(); },1000);
+  }catch{err.textContent='Server offline!';}
 }
 
-function doLogout() {
-  loggedInUser = null;
-  document.getElementById('login-user').value = '';
-  document.getElementById('login-pass').value = '';
-  document.getElementById('login-err').textContent = '';
+function doLogout(){
+  loggedInUser=null;
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-err').textContent='';
   showScreen('auth-screen');
 }
 
-// Enter key support for login/register
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const active = document.querySelector('.screen.active');
-    if (active && active.id === 'auth-screen') {
-      const loginVisible = document.getElementById('form-login').style.display !== 'none';
-      if (loginVisible) doLogin(); else doRegister();
-    }
-  }
-});
+// ── SCREENS ────────────────────────────────────────────
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 
-function joinLobby() {
-  const name = loggedInUser || document.getElementById('player-name').value.trim();
-  let   lid  = document.getElementById('lobby-name').value.trim();
-  if (!name) { alert('Please log in first!'); return; }
-  if (!lid)  lid = 'lobby_' + Math.random().toString(36).slice(2,7);
-
+function joinLobby(){
+  if(!loggedInUser){alert('Please log in first!');return;}
+  let lid=document.getElementById('lobby-name').value.trim();
+  if(!lid) lid='lobby_'+Math.random().toString(36).slice(2,7);
   showScreen('game-screen');
-  document.getElementById('chat-log').innerHTML = '';
-  Object.values(meshes).forEach(m => { scene.remove(m.group); scene.remove(m.shadow); });
-  meshes = {};
-  gameState = null;
-
-  connect(name, lid);
+  document.getElementById('chat-log').innerHTML='';
+  Object.values(meshes).forEach(m=>{scene.remove(m.group);scene.remove(m.shadow);}); meshes={};
+  gameState=null; platformSize=24; buildPlatform();
+  connect(loggedInUser,lid);
 }
 
-function leaveGame() {
-  if (ws) { ws.close(); ws = null; }
-  stopInputLoop();
-  gameState = null;
-  showScreen('menu-screen');
-  refreshLobbies();
+function leaveGame(){
+  if(ws){ws.close();ws=null;} stopInputLoop(); gameState=null;
+  showScreen('menu-screen'); refreshLobbies();
 }
 
-// ─── Lobby browser ───────────────────────────────────────────────
-async function refreshLobbies() {
-  try {
-    const res  = await fetch(`${API_BASE}/lobbies`);
-    const data = await res.json();
-    const el   = document.getElementById('lobby-list');
-    if (!data.length) {
-      el.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:0.85rem;text-align:center;padding:10px">No open lobbies yet — create one!</div>';
-      return;
-    }
-    el.innerHTML = data.map(lb => `
-      <div class="lobby-item" onclick="quickJoin('${escAttr(lb.id)}')">
-        <div>
-          <div class="lb-name">${escHtml(lb.id)}</div>
-          <div class="lb-info">Host: ${escHtml(lb.host)} · ${lb.players}/${lb.max} players</div>
-        </div>
-        <span class="lb-badge ${lb.state}">${lb.state}</span>
-      </div>
-    `).join('');
-  } catch (e) {
-    document.getElementById('lobby-list').innerHTML =
-      '<div style="color:#ff6b6b;font-size:0.85rem;text-align:center;padding:10px">Server offline</div>';
-  }
+async function refreshLobbies(){
+  try{
+    const r=await fetch(`${API_BASE}/lobbies`); const d=await r.json();
+    const el=document.getElementById('lobby-list');
+    if(!d.length){el.innerHTML='<div style="color:rgba(255,255,255,.3);font-size:.8rem;text-align:center;padding:7px">No open lobbies yet!</div>';return;}
+    el.innerHTML=d.map(lb=>`<div class="lobby-item" onclick="quickJoin('${escAttr(lb.id)}')"><div><div class="lb-name">${escHtml(lb.id)}</div><div class="lb-info">Host: ${escHtml(lb.host)} · ${lb.players}/${lb.max}</div></div><span class="lb-badge ${lb.state}">${lb.state}</span></div>`).join('');
+  }catch{document.getElementById('lobby-list').innerHTML='<div style="color:#ff6b6b;font-size:.8rem;text-align:center">Server offline</div>';}
 }
 
-function quickJoin(lid) {
-  const name = document.getElementById('player-name').value.trim();
-  if (!name) { alert('Enter your name first!'); return; }
-  document.getElementById('lobby-name').value = lid;
-  joinLobby();
-}
+function quickJoin(lid){ if(!loggedInUser){alert('Log in first!');return;} document.getElementById('lobby-name').value=lid; joinLobby(); }
 
-// ─── Leaderboard ─────────────────────────────────────────────────
-async function openLeaderboard() {
-  try {
-    const res  = await fetch(`${API_BASE}/leaderboard`);
-    const data = await res.json();
-    const el   = document.getElementById('lb-entries');
-    if (!data.length) {
-      el.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.4)">No games played yet!</p>';
-    } else {
-      el.innerHTML = data.map((entry, i) => {
-        const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
-        return `
-          <div class="lb-row">
-            <span class="lb-rank ${rankClass}">${medal}</span>
-            <span class="lb-uname">${escHtml(entry.name)}</span>
-            <span class="lb-wins">${entry.wins} wins</span>
-          </div>
-        `;
-      }).join('');
-    }
-  } catch (e) {
-    document.getElementById('lb-entries').innerHTML = '<p style="color:#ff6b6b;text-align:center">Server offline</p>';
-  }
+async function openLeaderboard(){
+  try{
+    const r=await fetch(`${API_BASE}/leaderboard`); const d=await r.json();
+    document.getElementById('lb-entries').innerHTML=!d.length?'<p style="text-align:center;color:rgba(255,255,255,.4)">No games yet!</p>':
+      d.map((e,i)=>{const rc=i===0?'gold':i===1?'silver':i===2?'bronze':''; const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+        return `<div class="lb-row"><span class="lb-rank ${rc}">${medal}</span><span class="lb-uname">${escHtml(e.name)}</span><span class="lb-wins">${e.wins}W</span></div>`;}).join('');
+  }catch{document.getElementById('lb-entries').innerHTML='<p style="color:#ff6b6b;text-align:center">Server offline</p>';}
   document.getElementById('lb-modal').classList.add('open');
 }
-function closeLB() { document.getElementById('lb-modal').classList.remove('open'); }
+function closeLB(){ document.getElementById('lb-modal').classList.remove('open'); }
 
-// ─── Keyboard ────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  keys[e.key] = true;
-  if (e.key === ' ') e.preventDefault();
-  if ((e.key === 'f' || e.key === 'F') && gameState && gameState.state === 'playing') {
-    startCharge();
-  }
-  if ((e.key === 'Enter') && document.activeElement === document.getElementById('chat-input')) {
-    sendChat();
-  }
-});
-document.addEventListener('keyup', e => {
-  keys[e.key] = false;
-  if (e.key === 'f' || e.key === 'F') {
-    releaseCharge();
-  }
-});
-
-// Click to charge/release
-document.getElementById('canvas').addEventListener('mousedown', () => {
-  if (gameState && gameState.state === 'playing') startCharge();
-});
-document.getElementById('canvas').addEventListener('mouseup', () => {
-  releaseCharge();
-});
-
-function flashScreen() {
-  const f = document.createElement('div');
-  f.className = 'punch-flash';
-  document.getElementById('game-screen').appendChild(f);
-  setTimeout(() => f.remove(), 250);
+function appendChat(msg){
+  const log=document.getElementById('chat-log');
+  const div=document.createElement('div');
+  div.className='chat-msg'+(msg.system?' system':'');
+  div.innerHTML=msg.system?escHtml(msg.msg):`<span class="sender">${escHtml(msg.sender)}:</span> ${escHtml(msg.msg)}`;
+  log.appendChild(div); log.scrollTop=log.scrollHeight;
 }
-
-// ─── Mobile controls ─────────────────────────────────────────────
-function mobileDir(dir, on) { mobileDirs[dir] = on; }
-function mobileAction(a) {
-  if (a === 'jump')     { mobileJump  = true; }
-  if (a === 'punch')    { mobilePunch = true; flashScreen(); }
-  if (a === 'jump_up')  { mobileJump  = false; }
+function sendChat(){
+  const inp=document.getElementById('chat-input'); const msg=inp.value.trim();
+  if(!msg||!ws)return; ws.send(JSON.stringify({type:'chat',msg})); inp.value='';
 }
+function flashScreen(){ const f=document.createElement('div'); f.className='punch-flash'; document.getElementById('game-screen').appendChild(f); setTimeout(()=>f.remove(),250); }
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return String(s).replace(/"/g,'&quot;'); }
 
-// ─── Utils ───────────────────────────────────────────────────────
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-function escAttr(s) {
-  return String(s).replace(/"/g, '&quot;');
-}
-
-// ─── Boot ────────────────────────────────────────────────────────
 initThree();
 </script>
 </body>
