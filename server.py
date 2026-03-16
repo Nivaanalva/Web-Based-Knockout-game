@@ -26,20 +26,23 @@ app.add_middleware(
 )
 
 # ─── Constants ────────────────────────────────────────────────────────────────
-PLATFORM_RADIUS   = 12.0
-FALL_THRESHOLD    = -6.0      # y below this = eliminated
-TICK_RATE         = 0.05      # 20 ticks/sec
-PUNCH_RANGE       = 2.5
-PUNCH_FORCE       = 18.0
-PUNCH_COOLDOWN    = 0.8
+PLATFORM_SIZE     = 24.0      # square platform width
+PLATFORM_MIN      = 8.0       # minimum platform size
+PLATFORM_SHRINK   = 2.0       # shrink per elimination
+FALL_THRESHOLD    = -6.0
+TICK_RATE         = 0.05
+PUNCH_RANGE       = 3.0
+PUNCH_FORCE_MIN   = 8.0
+PUNCH_FORCE_MAX   = 28.0
+PUNCH_COOLDOWN    = 1.0
 GRAVITY           = -20.0
 GROUND_Y          = 0.0
-PLAYER_SPEED      = 6.0
+PLAYER_SPEED      = 3.5       # slower, less sensitive
 JUMP_VEL          = 9.0
 LOBBY_MAX         = 9
-LOBBY_START_MIN   = 1         # min players to start countdown
+LOBBY_START_MIN   = 1
 COUNTDOWN_SECS    = 5
-AI_TICK           = 0.25      # AI decision interval
+AI_TICK           = 0.25
 
 COLORS = ["#FF6B6B","#FFD93D","#6BCB77","#4D96FF",
           "#C77DFF","#FF9A3C","#00C9A7","#FF61A6"]
@@ -92,9 +95,9 @@ class Player:
         }
 
     def spawn(self, index: int, total: int):
-        """Spawn evenly around a circle"""
+        """Spawn evenly around the square"""
         angle = (2 * math.pi * index) / max(total, 1)
-        r = PLATFORM_RADIUS * 0.55
+        r = (PLATFORM_SIZE / 2) * 0.55
         self.x  = r * math.cos(angle)
         self.y  = GROUND_Y
         self.z  = r * math.sin(angle)
@@ -112,6 +115,7 @@ class Lobby:
         self.state       = "waiting"   # waiting | countdown | playing | ended
         self.countdown   = COUNTDOWN_SECS
         self.winner:     Optional[str] = None
+        self.platform_size = PLATFORM_SIZE
         self._task:      Optional[asyncio.Task] = None
         self._last_tick  = time.time()
 
@@ -151,6 +155,7 @@ class Lobby:
             "state":   self.state,
             "countdown": self.countdown,
             "winner":  self.winner,
+            "platform_size": self.platform_size,
         })
 
     async def send_chat(self, sender: str, msg: str, system: bool = False):
@@ -194,13 +199,17 @@ class Lobby:
             # Physics
             self._physics_tick(dt)
 
-            # Check eliminations
+            # Check eliminations (square platform bounds)
+            half = self.platform_size / 2
             eliminated = [p for p in self.players.values()
-                          if p.alive and p.y < FALL_THRESHOLD]
+                          if p.alive and (p.y < FALL_THRESHOLD or
+                             abs(p.x) > half + 2 or abs(p.z) > half + 2)]
             for p in eliminated:
                 p.alive = False
                 p.deaths += 1
-                await self.send_chat("", f"💀 {p.name} fell off!", system=True)
+                # Shrink platform
+                self.platform_size = max(PLATFORM_MIN, self.platform_size - PLATFORM_SHRINK)
+                await self.send_chat("", f"💀 {p.name} fell off! Platform shrinking!", system=True)
 
             # Check win condition
             alive = self.alive_players()
@@ -224,6 +233,7 @@ class Lobby:
                 # Reset to waiting
                 self.state   = "waiting"
                 self.winner  = None
+                self.platform_size = PLATFORM_SIZE
                 for p in self.players.values():
                     p.alive = True
                     p.spawn(0, 1)
@@ -234,24 +244,18 @@ class Lobby:
             await asyncio.sleep(TICK_RATE)
 
     def _physics_tick(self, dt: float):
+        half = self.platform_size / 2
         for p in self.players.values():
             if not p.alive:
                 continue
-
-            # Gravity
             if not p.on_ground:
                 p.vy += GRAVITY * dt
-
-            # Integrate position
             p.x += p.vx * dt
             p.y += p.vy * dt
             p.z += p.vz * dt
-
-            # Ground collision
+            # Ground collision — square platform
             if p.y <= GROUND_Y:
-                # Check if over platform
-                dist = math.sqrt(p.x**2 + p.z**2)
-                if dist < PLATFORM_RADIUS:
+                if abs(p.x) < half and abs(p.z) < half:
                     p.y        = GROUND_Y
                     p.vy       = 0.0
                     p.on_ground = True
@@ -259,13 +263,11 @@ class Lobby:
                     p.on_ground = False
             else:
                 p.on_ground = False
-
-            # Friction
-            friction = 0.85 if p.on_ground else 0.97
+            friction = 0.80 if p.on_ground else 0.97
             p.vx *= friction
             p.vz *= friction
 
-    def _punch(self, attacker: Player, target: Player):
+    def _punch(self, attacker: Player, target: Player, power: float = 5.0):
         now = time.time()
         if now - attacker.last_punch < PUNCH_COOLDOWN:
             return
@@ -276,11 +278,14 @@ class Lobby:
             return
         attacker.last_punch = now
         nx, nz = dx / dist, dz / dist
-        target.vx  += nx * PUNCH_FORCE
-        target.vz  += nz * PUNCH_FORCE
-        target.vy  += 5.0
+        # Scale force by power (1-10)
+        t = max(0, min(10, power)) / 10.0
+        force = PUNCH_FORCE_MIN + t * (PUNCH_FORCE_MAX - PUNCH_FORCE_MIN)
+        target.vx  += nx * force
+        target.vz  += nz * force
+        target.vy  += force * 0.3
         target.on_ground = False
-        attacker.kills += 1   # track hits
+        attacker.kills += 1
 
     # ── AI logic ──────────────────────────────────────────────────────────────
     def _ai_tick(self, ai: Player, now: float):
@@ -293,7 +298,6 @@ class Lobby:
         if not alive_enemies:
             return
 
-        # Pick nearest target
         def dist_to(p):
             return math.sqrt((p.x-ai.x)**2 + (p.z-ai.z)**2)
         target = min(alive_enemies, key=dist_to)
@@ -303,26 +307,23 @@ class Lobby:
         dz = target.z - ai.z
         dist = dist_to(target)
 
-        # Stay on platform — retreat if near edge
-        my_dist = math.sqrt(ai.x**2 + ai.z**2)
-        if my_dist > PLATFORM_RADIUS * 0.85:
-            # Move toward center
-            cx, cz = -ai.x / my_dist, -ai.z / my_dist
-            ai.vx += cx * PLAYER_SPEED * 0.6
-            ai.vz += cz * PLAYER_SPEED * 0.6
+        # Stay on square platform — retreat if near edge
+        half = self.platform_size / 2
+        if abs(ai.x) > half * 0.8 or abs(ai.z) > half * 0.8:
+            ai.vx += (-ai.x / max(abs(ai.x), 0.1)) * PLAYER_SPEED * 0.6
+            ai.vz += (-ai.z / max(abs(ai.z), 0.1)) * PLAYER_SPEED * 0.6
             return
 
         if dist < PUNCH_RANGE:
-            self._punch(ai, target)
+            power = random.uniform(5, 10)
+            self._punch(ai, target, power)
         else:
-            # Move toward target
             if dist > 0:
                 spd = PLAYER_SPEED * random.uniform(0.6, 1.0)
                 ai.vx += (dx / dist) * spd * AI_TICK
                 ai.vz += (dz / dist) * spd * AI_TICK
                 ai.rot_y = math.atan2(dx, dz)
 
-        # Occasionally jump
         if ai.on_ground and random.random() < 0.05:
             ai.vy = JUMP_VEL
             ai.on_ground = False
@@ -460,7 +461,7 @@ async def _handle_message(lobby: Lobby, player: Player, data: dict):
             player.on_ground = False
 
         if inp.get("punch"):
-            # Find nearest alive target
+            power = float(inp.get("power", 5.0))
             best, best_dist = None, float("inf")
             for other in lobby.alive_players():
                 if other.id == player.id:
@@ -469,7 +470,7 @@ async def _handle_message(lobby: Lobby, player: Player, data: dict):
                 if d < best_dist:
                     best, best_dist = other, d
             if best:
-                lobby._punch(player, best)
+                lobby._punch(player, best, power)
 
     elif kind == "chat":
         msg = str(data.get("msg", ""))[:200].strip()

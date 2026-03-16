@@ -442,6 +442,44 @@
   #mob-jump  { background: #4d96ff; color:#fff; }
   #mob-punch { background: #ff6b6b; color:#fff; }
 
+  /* Power meter */
+  #power-meter-container {
+    position: absolute;
+    bottom: 50px; left: 50%; transform: translateX(-50%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+  }
+  #power-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: #fff;
+    letter-spacing: 2px;
+  }
+  #power-bar-bg {
+    width: 220px;
+    height: 22px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  #power-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, #6bcb77, #ffd93d, #ff6b6b);
+    transition: width 0.05s linear;
+  }
+  #power-number {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    color: #ffd93d;
+    text-shadow: 0 0 20px rgba(255,217,61,0.8);
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -534,7 +572,14 @@
     <p id="winner-sub">Returning to lobby…</p>
   </div>
 
-  <div id="controls-hint">WASD / Arrows — Move &nbsp;|&nbsp; Space — Jump &nbsp;|&nbsp; F / Click — Punch</div>
+  <div id="controls-hint">WASD — Move &nbsp;|&nbsp; Space — Jump &nbsp;|&nbsp; Hold F — Charge &nbsp;|&nbsp; Release F — PUNCH 👊</div>
+
+  <!-- Power meter -->
+  <div id="power-meter-container">
+    <div id="power-label">⚡ POWER</div>
+    <div id="power-bar-bg"><div id="power-bar"></div></div>
+    <div id="power-number">0</div>
+  </div>
 
   <!-- Chat -->
   <div id="chat-container">
@@ -664,42 +709,42 @@ function initThree() {
   animate();
 }
 
-function buildPlatform() {
-  const RADIUS = 12;
-  // Main disc
-  const geo = new THREE.CylinderGeometry(RADIUS, RADIUS + 0.5, 1.2, 32);
-  const mat = new THREE.MeshLambertMaterial({ color: 0x5cb85c });
-  platform = new THREE.Mesh(geo, mat);
-  platform.position.y = -0.6;
-  platform.receiveShadow = true;
-  scene.add(platform);
+let platformMesh = null;
+let platformSize = 24;
 
-  // Top face slightly lighter
-  const topGeo = new THREE.CircleGeometry(RADIUS, 32);
+function buildPlatform() {
+  if (platformMesh) { scene.remove(platformMesh); }
+  const s = platformSize;
+  const geo = new THREE.BoxGeometry(s, 1.2, s);
+  const mat = new THREE.MeshLambertMaterial({ color: 0x5cb85c });
+  platformMesh = new THREE.Mesh(geo, mat);
+  platformMesh.position.y = -0.6;
+  platformMesh.receiveShadow = true;
+  scene.add(platformMesh);
+
+  // Top face
+  const topGeo = new THREE.PlaneGeometry(s, s);
   const topMat = new THREE.MeshLambertMaterial({ color: 0x76d17e });
   const top = new THREE.Mesh(topGeo, topMat);
   top.rotation.x = -Math.PI / 2;
   top.position.y = 0.01;
   scene.add(top);
 
-  // Edge stripes
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2;
-    const sg = new THREE.BoxGeometry(0.5, 0.15, 2);
-    const sm = new THREE.MeshLambertMaterial({ color: i % 2 === 0 ? 0xffcc00 : 0xff4444 });
-    const stripe = new THREE.Mesh(sg, sm);
-    stripe.position.set(
-      Math.cos(angle) * (RADIUS - 1), 0.08, Math.sin(angle) * (RADIUS - 1)
-    );
-    stripe.rotation.y = angle;
+  // Danger stripes on edges
+  const edgeMat1 = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
+  const edgeMat2 = new THREE.MeshLambertMaterial({ color: 0xff4444 });
+  const stripeW = 0.6;
+  [[-s/2, 0], [s/2, 0], [0, -s/2], [0, s/2]].forEach(([ex, ez], i) => {
+    const isX = i < 2;
+    const sg = new THREE.BoxGeometry(isX ? stripeW : s, 0.15, isX ? s : stripeW);
+    const stripe = new THREE.Mesh(sg, i % 2 === 0 ? edgeMat1 : edgeMat2);
+    stripe.position.set(ex, 0.08, ez);
     scene.add(stripe);
-  }
-
-  // Below abyss visual
-  const voidGeo = new THREE.CylinderGeometry(RADIUS + 3, RADIUS + 8, 20, 32, 1, true);
-  const voidMat = new THREE.MeshBasicMaterial({
-    color: 0x1a1a2e, side: THREE.BackSide, transparent: true, opacity: 0.5
   });
+
+  // Void below
+  const voidGeo = new THREE.BoxGeometry(s + 10, 20, s + 10);
+  const voidMat = new THREE.MeshBasicMaterial({ color: 0x1a1a2e, side: THREE.BackSide, transparent: true, opacity: 0.4 });
   const voidMesh = new THREE.Mesh(voidGeo, voidMat);
   voidMesh.position.y = -10;
   scene.add(voidMesh);
@@ -954,6 +999,20 @@ function handleMessage(msg) {
     myId = msg.your_id;
   } else if (msg.type === 'game_state') {
     gameState = msg;
+    // Rebuild platform if size changed
+    if (msg.platform_size && msg.platform_size !== platformSize) {
+      platformSize = msg.platform_size;
+      scene.clear();
+      buildPlatform();
+      buildClouds();
+      const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambient);
+      const sun = new THREE.DirectionalLight(0xfffbe0, 1.4);
+      sun.position.set(20, 40, 20);
+      sun.castShadow = true;
+      scene.add(sun);
+      meshes = {};
+    }
     syncMeshes(msg.players);
     updateHUD(msg);
   } else if (msg.type === 'chat') {
@@ -972,29 +1031,62 @@ function stopInputLoop() {
   clearInterval(inputInterval);
 }
 
+let chargeStart = 0;
+let isCharging  = false;
+let chargeLevel = 0;
+const MAX_CHARGE_TIME = 2000; // 2 seconds = max power
+
+function startCharge() {
+  if (isCharging) return;
+  isCharging  = true;
+  chargeStart = Date.now();
+  document.getElementById('power-meter-container').style.display = 'flex';
+}
+
+function releaseCharge() {
+  if (!isCharging) return;
+  isCharging  = false;
+  const elapsed = Date.now() - chargeStart;
+  chargeLevel = Math.min(10, Math.round((elapsed / MAX_CHARGE_TIME) * 10));
+  document.getElementById('power-meter-container').style.display = 'none';
+  document.getElementById('power-bar').style.width = '0%';
+  document.getElementById('power-number').textContent = '0';
+  // Send punch with power
+  if (ws && ws.readyState === WebSocket.OPEN && gameState && gameState.state === 'playing') {
+    ws.send(JSON.stringify({ type: 'input', input: { dx:0, dz:0, punch: true, power: chargeLevel }}));
+    flashScreen();
+  }
+  chargeLevel = 0;
+}
+
+function updateChargeMeter() {
+  if (!isCharging) return;
+  const elapsed  = Date.now() - chargeStart;
+  const pct      = Math.min(1, elapsed / MAX_CHARGE_TIME);
+  const lvl      = Math.ceil(pct * 10);
+  document.getElementById('power-bar').style.width    = (pct * 100) + '%';
+  document.getElementById('power-number').textContent = lvl;
+}
+
 function sendInput() {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  // Compute direction relative to camera view
+  updateChargeMeter();
   let dx = 0, dz = 0;
   if (keys['ArrowUp']    || keys['w'] || keys['W'] || mobileDirs.up)    dz -= 1;
   if (keys['ArrowDown']  || keys['s'] || keys['S'] || mobileDirs.down)  dz += 1;
   if (keys['ArrowLeft']  || keys['a'] || keys['A'] || mobileDirs.left)  dx -= 1;
   if (keys['ArrowRight'] || keys['d'] || keys['D'] || mobileDirs.right) dx += 1;
 
-  // Rotate by camera angle
-  const ca = cameraAngle;
+  const ca  = cameraAngle;
   const rdx = dx * Math.cos(-ca) - dz * Math.sin(-ca);
   const rdz = dx * Math.sin(-ca) + dz * Math.cos(-ca);
 
-  const jump  = !!(keys[' '] || mobileJump);
-  const punch = !!(keys['f'] || keys['F'] || mobilePunch);
-  mobileJump  = false;
-  mobilePunch = false;
+  const jump = !!(keys[' '] || mobileJump);
+  mobileJump = false;
 
-  ws.send(JSON.stringify({
-    type: 'input',
-    input: { dx: rdx, dz: rdz, jump, punch }
-  }));
+  if (dx !== 0 || dz !== 0 || jump) {
+    ws.send(JSON.stringify({ type: 'input', input: { dx: rdx, dz: rdz, jump, punch: false, power: 0 }}));
+  }
 }
 
 // ─── Chat ────────────────────────────────────────────────────────
@@ -1192,19 +1284,26 @@ function closeLB() { document.getElementById('lb-modal').classList.remove('open'
 document.addEventListener('keydown', e => {
   keys[e.key] = true;
   if (e.key === ' ') e.preventDefault();
+  if ((e.key === 'f' || e.key === 'F') && gameState && gameState.state === 'playing') {
+    startCharge();
+  }
   if ((e.key === 'Enter') && document.activeElement === document.getElementById('chat-input')) {
     sendChat();
   }
 });
-document.addEventListener('keyup', e => { keys[e.key] = false; });
-
-// Click to punch
-document.getElementById('canvas').addEventListener('click', () => {
-  if (gameState && gameState.state === 'playing') {
-    keys['f'] = true;
-    setTimeout(() => { keys['f'] = false; }, 100);
-    flashScreen();
+document.addEventListener('keyup', e => {
+  keys[e.key] = false;
+  if (e.key === 'f' || e.key === 'F') {
+    releaseCharge();
   }
+});
+
+// Click to charge/release
+document.getElementById('canvas').addEventListener('mousedown', () => {
+  if (gameState && gameState.state === 'playing') startCharge();
+});
+document.getElementById('canvas').addEventListener('mouseup', () => {
+  releaseCharge();
 });
 
 function flashScreen() {
